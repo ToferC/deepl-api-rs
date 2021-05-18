@@ -6,9 +6,10 @@
 //!
 //! # Requirements
 //!
-//! You need to have a valid [DeepL Pro Developer](https://www.deepl.com/pro#developer) account
+//! You need to have a valid [DeepL Developer](https://www.deepl.com/pro#developer) account
 //! with an associated API key. This key must be made available to the application, e. g. via
-//! environment variable:
+//! environment variable below. You may also add an optional key to identify whether this is a free
+//! or Pro account.
 //!
 //! ```bash
 //! export DEEPL_API_KEY=YOUR_KEY
