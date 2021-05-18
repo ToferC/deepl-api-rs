@@ -142,6 +142,7 @@ struct ServerErrorMessage {
 /// If you get an [AuthorizationError](ErrorKind::AuthorizationError), then something was wrong with your API key, for example.
 pub struct DeepL {
     api_key: String,
+    free_tier: bool,
 }
 
 /// Implements the actual REST API. See also the [online documentation](https://www.deepl.com/docs-api/).
@@ -151,8 +152,8 @@ impl DeepL {
     ///
     /// Should you ever need to use more than one DeepL account in our program, then you can create one
     /// instance for each account / API key.
-    pub fn new(api_key: String) -> DeepL {
-        DeepL { api_key }
+    pub fn new(api_key: String, free_tier: bool) -> DeepL {
+        DeepL { api_key, free_tier }
     }
 
     /// Private method that performs the HTTP calls.
@@ -162,7 +163,12 @@ impl DeepL {
         query: &Vec<(&str, std::string::String)>,
     ) -> Result<reqwest::blocking::Response> {
 
-        let url = format!("https://api.deepl.com/v2{}", url);
+        let url_mod = match self.free_tier {
+            true => "-free",
+            false => "",
+        };
+
+        let url = format!("https://api{}.deepl.com/v2{}", url_mod, url);
         let mut payload = query.clone();
         payload.push(("auth_key", self.api_key.clone()));
 
@@ -332,28 +338,28 @@ mod tests {
     #[test]
     fn usage_information() {
         let key = std::env::var("DEEPL_API_KEY").unwrap();
-        let usage_information = DeepL::new(key).usage_information().unwrap();
+        let usage_information = DeepL::new(key, false).usage_information().unwrap();
         assert!(usage_information.character_limit > 0);
     }
 
     #[test]
     fn source_languages() {
         let key = std::env::var("DEEPL_API_KEY").unwrap();
-        let source_languages = DeepL::new(key).source_languages().unwrap();
+        let source_languages = DeepL::new(key, false).source_languages().unwrap();
         assert_eq!(source_languages.last().unwrap().name, "Chinese");
     }
 
     #[test]
     fn target_languages() {
         let key = std::env::var("DEEPL_API_KEY").unwrap();
-        let target_languages = DeepL::new(key).target_languages().unwrap();
+        let target_languages = DeepL::new(key, false).target_languages().unwrap();
         assert_eq!(target_languages.last().unwrap().name, "Chinese");
     }
 
     #[test]
     fn translate() {
         let key = std::env::var("DEEPL_API_KEY").unwrap();
-        let deepl = DeepL::new(key);
+        let deepl = DeepL::new(key, false);
         let tests = vec![
             (
                 None,
@@ -446,7 +452,7 @@ mod tests {
             target_language: "EN-US".to_string(),
             texts: vec![],
         };
-        DeepL::new(key).translate(None, texts).unwrap();
+        DeepL::new(key, false).translate(None, texts).unwrap();
     }
 
     #[test]
@@ -458,7 +464,7 @@ mod tests {
             target_language: "NONEXISTING".to_string(),
             texts: vec!["ja".to_string()],
         };
-        DeepL::new(key).translate(None, texts).unwrap();
+        DeepL::new(key, false).translate(None, texts).unwrap();
     }
 
     #[test]
@@ -470,6 +476,6 @@ mod tests {
             target_language: "EN-US".to_string(),
             texts: vec!["ja".to_string()],
         };
-        DeepL::new(key).translate(None, texts).unwrap();
+        DeepL::new(key, false).translate(None, texts).unwrap();
     }
 }
