@@ -102,15 +102,7 @@ async fn main() {
         }
     };
 
-    let tier = match std::env::var("DEEPL_API_TIER") {
-        Ok(val) if val == "FREE" => true,
-        _ => {
-            eprintln!("Error: no DEEPL_API_TIER found. Defaulting to false.");
-            false
-        }
-    };
-
-    let deepl = DeepL::new(key, tier);
+    let deepl = DeepL::new(key);
 
     let result = match opts.subcmd {
         SubCommand::Translate(t) => translate(&deepl, &t).await,

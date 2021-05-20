@@ -142,7 +142,6 @@ struct ServerErrorMessage {
 /// If you get an [AuthorizationError](ErrorKind::AuthorizationError), then something was wrong with your API key, for example.
 pub struct DeepL {
     api_key: String,
-    free_tier: bool,
 }
 
 /// Implements the actual REST API. See also the [online documentation](https://www.deepl.com/docs-api/).
@@ -152,8 +151,8 @@ impl DeepL {
     ///
     /// Should you ever need to use more than one DeepL account in our program, then you can create one
     /// instance for each account / API key.
-    pub fn new(api_key: String, free_tier: bool) -> DeepL {
-        DeepL { api_key, free_tier }
+    pub fn new(api_key: String) -> DeepL {
+        DeepL { api_key }
     }
 
     /// Private method that performs the HTTP calls.
@@ -163,12 +162,11 @@ impl DeepL {
         query: &Vec<(&str, std::string::String)>,
     ) -> Result<reqwest::Response> {
 
-        let url_mod = match self.free_tier {
-            true => "-free",
-            false => "",
+        let url = match self.api_key.ends_with(":fx") {
+            true  => format!("https://api-free.deepl.com/v2{}", url),
+            false => format!("https://api.deepl.com/v2{}", url),
         };
 
-        let url = format!("https://api{}.deepl.com/v2{}", url_mod, url);
         let mut payload = query.clone();
         payload.push(("auth_key", self.api_key.clone()));
 
