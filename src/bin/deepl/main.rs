@@ -90,7 +90,8 @@ use std::io::{self, Read};
 mod parse_arguments;
 use parse_arguments::*;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let opts: Opts = Opts::parse();
 
     let key = match std::env::var("DEEPL_API_KEY") {
@@ -112,9 +113,9 @@ fn main() {
     let deepl = DeepL::new(key, tier);
 
     let result = match opts.subcmd {
-        SubCommand::Translate(t) => translate(&deepl, &t),
-        SubCommand::UsageInformation => usage_information(&deepl),
-        SubCommand::Languages => languages(&deepl),
+        SubCommand::Translate(t) => translate(&deepl, &t).await,
+        SubCommand::UsageInformation => usage_information(&deepl).await,
+        SubCommand::Languages => languages(&deepl).await,
     };
 
     if let Err(e) = result {
@@ -123,7 +124,7 @@ fn main() {
     }
 }
 
-fn translate(deepl: &DeepL, t: &Translate) -> Result<()> {
+async fn translate(deepl: &DeepL, t: &Translate) -> Result<()> {
     let mut t_opts = TranslationOptions {
         split_sentences: None,
         preserve_formatting: None,
@@ -152,7 +153,7 @@ fn translate(deepl: &DeepL, t: &Translate) -> Result<()> {
         texts: vec![text],
     };
 
-    let translations = deepl.translate(Some(t_opts), texts)?;
+    let translations = deepl.translate(Some(t_opts), texts).await?;
     let mut output = String::new();
     for t in translations {
         output.push_str(&t.text);
@@ -167,8 +168,8 @@ fn translate(deepl: &DeepL, t: &Translate) -> Result<()> {
     Ok(())
 }
 
-fn usage_information(deepl: &DeepL) -> Result<()> {
-    let usage = deepl.usage_information()?;
+async fn usage_information(deepl: &DeepL) -> Result<()> {
+    let usage = deepl.usage_information().await?;
     println!(
         "Available characters per billing period: {}",
         usage.character_limit
@@ -180,9 +181,9 @@ fn usage_information(deepl: &DeepL) -> Result<()> {
     Ok(())
 }
 
-fn languages(deepl: &DeepL) -> Result<()> {
-    let source_langs = deepl.source_languages()?;
-    let target_langs = deepl.target_languages()?;
+async fn languages(deepl: &DeepL) -> Result<()> {
+    let source_langs = deepl.source_languages().await?;
+    let target_langs = deepl.target_languages().await?;
     println!("DeepL can translate from the following source languages:");
     for lang in source_langs {
         println!("  {:<5} ({})", lang.language, lang.name)
